@@ -1,0 +1,36 @@
+[
+    {
+        "tpye": "grassland",
+        "trail section": [0, 100],
+        "travel speed modifier": {
+            "spring": 1.0,
+            "summer": 1.0,
+            "fall": 1.0,
+            "winter": 1.0
+        },
+        "game": {
+            "squirrel": "high",
+            "rabbit": "high",
+            "deer": "high",
+            "buffalo": "low"
+        }
+    },
+
+    {
+        "tpye": "grassland",
+        "trail section": [101, 500],
+        "travel speed modifier": {
+            "spring": 1.0,
+            "summer": 1.0,
+            "fall": 1.0,
+            "winter": 1.0
+        },
+        "game": {
+            "squirrel": "high",
+            "rabbit": "high",
+            "deer": "high",
+            "buffalo": "high"
+        }
+    }
+
+]

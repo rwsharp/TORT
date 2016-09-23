@@ -8,11 +8,12 @@ def main():
 
     data_path = os.path.abspath('data/')
     trail_file_name = os.path.join(data_path, 'route.json')
+    terrain_file_name = os.path.join(data_path, 'terrain.json')
     party_file_name = os.path.join(data_path, 'party.json')
 
     for t in range(trials):
 
-        trail = Trail(trail_file_name)
+        trail = Trail(trail_file_name, terrain_file_name)
         party = Party(party_file_name, trail)
         trail.set_date(party.data['start date'])
 
@@ -31,7 +32,7 @@ def main():
 
             print trail.date, party.data['mile marker'], party_state, party.number_alive()
             print party.data['inventory']
-            print party.data['members'][0]
+            #print party.data['members'][0]
             print
 
     # present Powell metrics

@@ -57,7 +57,7 @@ class Party():
 
     def get_min_speed(self):
 
-        min_speed = min([member['abilities']['speed'] for member in self.data['members']])
+        min_speed = min([member['abilities']['speed'] for member in self.data['members'] if member['condition']['health'] > 0])
 
         return min_speed
 
