@@ -1,0 +1,104 @@
+{
+  "members": [
+    {
+      "name": "Rich",
+      "condition": {
+        "comment": "the current state of the individual - values continually updated",
+        "health": 100,
+        "comment 2": "Possible afflictions: hunger, thirst, dysentery, cholera, exhaustion",
+        "afflictions": {}
+      },
+      "needs": {
+        "comment": "the basic requirments of the indivudal to stay healthy",
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "comment": "the innate capabilities of the individual",
+        "speed": 15,
+        "carpentry": "high",
+        "negotiation": "medium",
+        "husbandry": "low",
+        "medicine": "medium"
+      }
+    },
+    {
+      "name": "Pat",
+      "condition": {
+        "comment": "the current state of the individual - values continually updated",
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "comment": "the basic requirments of the indivudal to stay healthy",
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "comment": "the innate capabilities of the individual",
+        "speed": 15,
+        "carpentry": "high",
+        "negotiation": "medium",
+        "husbandry": "low",
+        "medicine": "medium"
+      }
+    },
+    {
+      "name": "Euge",
+      "condition": {
+        "comment": "the current state of the individual - values continually updated",
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "comment": "the basic requirments of the indivudal to stay healthy",
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "comment": "the innate capabilities of the individual",
+        "speed": 15,
+        "carpentry": "high",
+        "negotiation": "medium",
+        "husbandry": "low",
+        "medicine": "medium"
+      }
+    },
+    {
+      "name": "Alex",
+      "condition": {
+        "comment": "the current state of the individual - values continually updated",
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "comment": "the basic requirments of the indivudal to stay healthy",
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "comment": "the innate capabilities of the individual",
+        "speed": 15,
+        "carpentry": "high",
+        "negotiation": "medium",
+        "husbandry": "low",
+        "medicine": "medium"
+      }
+    }
+  ],
+
+  "inventory": {
+    "money": 500,
+    "oxen": 1,
+    "food": 100,
+    "water": 100,
+    "wheels": 3,
+    "axels": 3,
+    "cloathing": 4,
+    "winter cloathing": 4
+  },
+
+  "start date": "1848-04-01",
+
+  "mile marker": 0
+}

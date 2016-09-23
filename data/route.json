@@ -1,0 +1,44 @@
+[
+  { "name": "Independence, MO",
+    "mile marker": 0,
+    "town": {
+      "services": [{"store": {"stock": "high", "price": "low"}}],
+      "trade": "none"
+    }
+  },
+
+  {"name": "Kansas River Crossing",
+    "miles beyond last marker": 102,
+    "river": {
+      "flood stage": "spring",
+      "flood width": [300, 100],
+      "flood depth": [3, 1],
+      "normal width": [200, 50],
+      "normal depth": [1, 0.5],
+      "crossing methods": ["ferry", "caulk", "ford"]
+    }
+  },
+
+  {"name": "Big Blue River Crossing",
+    "miles beyond last marker": 82,
+    "river": {
+      "flood stage": "spring",
+      "flood width": [300, 100],
+      "flood depth": [3.5, 1],
+      "normal width": [200, 50],
+      "normal depth": [1, 0.5],
+      "crossing methods": ["caulk", "ford"]
+    }
+  },
+
+  {
+    "name": "Fort Kearney",
+    "miles beyond last marker": 118,
+    "town": {
+      "services": [
+        {"trade": {"stock": "high", "price": "medium"}},
+        {"store": {"stock": "high", "price": "medium"}}
+      ]
+    }
+  }
+]
