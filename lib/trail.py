@@ -1,7 +1,9 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from lib.camp import Camp
+from lib.camp  import Camp
+from lib.river import River
+from lib.town  import Town
 
 class Trail():
     """
@@ -10,27 +12,61 @@ class Trail():
     def __init__(self, trail_file_name=None, terrain_file_name=None):
         if trail_file_name is not None:
             with open(trail_file_name, 'r') as trail_file:
-                self.stops = json.load(trail_file)
-                self.set_mile_markers()
+                self.trail_data = json.load(trail_file)
         else:
-            self.stops = None
+            raise ValueError('ERROR - trail file required.')
 
         if terrain_file_name is not None:
             with open(terrain_file_name, 'r') as terrain_file:
-                self.terrain = json.load(terrain_file)
+                self.terrain_data = json.load(terrain_file)
         else:
-            self.terrain = None
+            raise ValueError('ERROR - terrain file required')
 
-        self.date = datetime.strptime('1846-03-01', '%Y-%m-%d')
+        self.initialize_path()
 
 
-    def set_date(self, date):
-        self.date = date
+    def initialize_path(self):
+        self.path = dict()
+        mile_marker = 0
+
+        for i, trail_stop in enumerate(self.trail_data):
+            # find the next mile marker
+            if trail_stop.get('mile marker') is None:
+                if trail_stop.get('miles beyond last marker') is None:
+                    raise KeyError('ERROR - This stop on the trail has no location data: ' + str(trail_stop))
+                else:
+                    next_mile_marker = mile_marker + trail_stop.get('miles beyond last marker')
+            else:
+                next_mile_marker = trail_stop.get('mile marker')
+
+            # make sure major stops are listed sequentially
+            if i > 0:
+                if next_mile_marker <= mile_marker:
+                    raise ValueError('ERROR - List of trail stops is out of order: ' + str(i) + ' ' + str(trail_stop))
+
+            # construct the path between trail_stops
+            for mm in range(mile_marker + 1, next_mile_marker):
+                # camp stops between trail stops
+                self.path[mm] = Camp(mile_marker=mm, properties=self.get_terrain(mm))
+
+            # trail stop at next_mile_marker
+            add_actions = trail_stop.get('add actions')
+            rem_actions = trail_stop.get('remove actions')
+            properties  = trail_stop.get('properties')
+
+            if trail_stop['kind'] == 'town':
+                self.path[next_mile_marker] = Town(name=trail_stop.get('name', 'town'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
+            elif trail_stop['kind'] == 'river':
+                self.path[next_mile_marker] = River(name=trail_stop.get('name', 'river'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
+            else:
+                ValueError('ERROR - Trail stop kind ' + str(trail_stop['kind']) + ' not implemented.')
+
+            mile_marker = next_mile_marker
 
 
     def get_terrain(self, mile_marker):
         section_found = False
-        for section in self.terrain:
+        for section in self.terrain_data:
             if section['trail section'][0] <= mile_marker <= section['trail section'][1]:
                 section_found = True
                 break
@@ -41,16 +77,29 @@ class Trail():
             raise ValueError('ERROR - no trail section found at mile marker ' + str(mile_marker))
 
 
-    def next_stop(self, current_mile_marker):
-        next_stop = None
-        for i, stop in enumerate(self.stops):
-            if stop['mile marker'] > current_mile_marker:
-                next_stop = stop
-                break
+    def next_major_stop(self, current_mile_marker):
+        found_next_major_stop = False
+        while(not found_next_major_stop):
+            if isinstance(self.path[current_mile_marker], (River, Town)):
+                found_next_major_stop = True
+            else:
+                current_mile_marker += 1
 
-        return next_stop
+        return self.path[current_mile_marker]
 
 
+    def last_major_stop(self, current_mile_marker):
+        found_last_major_stop = False
+        while (not found_last_major_stop):
+            if isinstance(self.path[current_mile_marker], (River, Town)):
+                found_last_major_stop = True
+            else:
+                current_mile_marker -= 1
+
+        return self.path[current_mile_marker]
+
+
+    """
     def set_mile_markers(self):
         mile_marker = 0
 
@@ -67,81 +116,15 @@ class Trail():
             if i > 0:
                 if stop['mile marker'] <= self.stops[i-1]['mile marker']:
                     raise ValueError('ERROR - List of trail stops is out of order.')
+    """
 
 
     def start_of_trail(self):
-        return self.stops[0]
+        return self.path[min(self.path.keys())]
+
 
     def end_of_trail(self):
-        return self.stops[-1]
+        return self.path[max(self.path.keys())]
 
 
-    def update(self, party, action):
-        if action['type'] == 'travel':
-            print self.travel(party, action['parameters'])
-        else:
-            raise ValueError('ERROR - Action not recognized: ' + str(action))
 
-        return party.state()
-
-
-    def get_season(self):
-        # Crude, but close enough
-        vernal_equinox = datetime(self.date.year, 3, 21)
-        summer_solstice = datetime(self.date.year, 6, 21)
-        autumnal_equinox = datetime(self.date.year, 9, 21)
-        winter_solstice = datetime(self.date.year, 12, 21)
-
-        if self.date < vernal_equinox:
-            season = 'winter'
-        elif vernal_equinox <= self.date < summer_solstice:
-            season = 'spring'
-        elif summer_solstice <= self.date < autumnal_equinox:
-            season = 'summer'
-        elif autumnal_equinox <= self.date < winter_solstice:
-            season = 'fall'
-        elif winter_solstice <= self.date:
-            season = 'winter'
-        else:
-            raise ValueError('ERROR - Something is wrong with self.date; you should never get here.' )
-
-        return season
-
-
-    def travel(self, party, parameters):
-        """
-        Simulate one day's travel along the trail. Update's the condition of the party.
-
-        Parameters
-        ----------
-        party: the party traveling the trail
-
-        Returns
-        -------
-        """
-
-        season = self.get_season()
-        section = self.get_terrain(party.data['mile marker'])
-        miles_per_day = party.get_min_speed() * section['travel speed modifier'][season]
-
-        stop = None
-
-        if party.data['mile marker'] + miles_per_day >= party.next_stop['mile marker']:
-            # arrived at next stop
-            print 'Arrived at ' + party.next_stop['name']
-            party.data['mile marker'] = party.next_stop['mile marker']
-            party.last_stop = party.next_stop
-            party.next_stop = self.next_stop(party.data['mile marker'])
-
-            stop = party.last_stop
-
-        else:
-            party.data['mile marker'] += miles_per_day
-
-            stop = Camp(party.data['mile marker']).stop
-
-        party.feed()
-        party.update_health()
-        self.date += timedelta(days=1)
-
-        return stop

@@ -1,44 +1,57 @@
 [
   { "name": "Independence, MO",
     "mile marker": 0,
-    "town": {
-      "services": [{"store": {"stock": "high", "price": "low"}}],
-      "trade": "none"
+    "kind": "town",
+    "add actions": ["shop"],
+    "properties": {
+      "store": {"stock": "high", "price": "low"}
     }
   },
 
   {"name": "Kansas River Crossing",
     "miles beyond last marker": 102,
-    "river": {
-      "flood stage": "spring",
-      "flood width": [300, 100],
-      "flood depth": [3, 1],
-      "normal width": [200, 50],
-      "normal depth": [1, 0.5],
-      "crossing methods": ["ferry", "caulk", "ford"]
+    "kind": "river",
+    "add actions": ["ferry", "caulk", "ford"],
+    "properties": {
+      "river": {
+        "flood stage": "spring",
+        "flood width": [300, 100],
+        "flood depth": [3, 1],
+        "low stage": "fall",
+        "low width": [200, 50],
+        "low depth": [1, 0.5],
+        "ferry": {
+          "price": 5,
+          "wait": 3
+        }
+      }
     }
   },
 
   {"name": "Big Blue River Crossing",
     "miles beyond last marker": 82,
-    "river": {
-      "flood stage": "spring",
-      "flood width": [300, 100],
-      "flood depth": [3.5, 1],
-      "normal width": [200, 50],
-      "normal depth": [1, 0.5],
-      "crossing methods": ["caulk", "ford"]
+    "kind": "river",
+    "add actions": ["caulk", "ford"],
+    "properties": {
+      "river": {
+        "flood stage": "spring",
+        "flood width": [300, 100],
+        "flood depth": [3.5, 1],
+        "low stage": "fall",
+        "low width": [200, 50],
+        "low depth": [1, 0.5]
+      }
     }
   },
 
   {
     "name": "Fort Kearney",
     "miles beyond last marker": 118,
-    "town": {
-      "services": [
-        {"trade": {"stock": "high", "price": "medium"}},
-        {"store": {"stock": "high", "price": "medium"}}
-      ]
+    "kind": "town",
+    "add actions": ["trade", "shop"],
+    "properties": {
+        "trader": {"stock": "high", "price": "medium"},
+        "store": {"stock": "high", "price": "medium"}
     }
   }
 ]
