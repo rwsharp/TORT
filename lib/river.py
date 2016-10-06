@@ -93,7 +93,11 @@ class River(Stop):
         # the river_state_initialization code.
         return (width, depth)
 
-
+    def ford_failure_rate(self, date):
+        xxxxx
+        
+    def ford_expected_food_loss(self, date):
+        xxxxx
 
 
 

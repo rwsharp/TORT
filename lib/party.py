@@ -98,15 +98,39 @@ class Party():
         benefit = self.party_speed()
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
-        cost = 1.0/float(self.remaining_food(action='travel', days=1)) + 1.0/float(self.remaining_health(action='travel', days=1))
+        parameters = {'days': 1}
+        cost = 1.0/float(self.remaining_food(action='travel', parameters=parameters)) + 1.0/float(self.remaining_health(action='travel', parameters))
         return a*benefit - b*cost
 
 
-    def remaining_food(self, action, days):
-        # the estiamted amount of food remaining in terms of days under the given action
+    def utility_ford(self):
+        # conversion factors
+        # the benefit of crossing the river in a day is equal to the cost of having 3 days left of both food and health
+        a = 1.0
+        b = 3.0/2.0
+
+        # fording a river runs the risk of a) failure - being forced to go back or b) loss of provisions
+
+        # expected distance traveled in one day
+        benefit = 1.0 * self.current_stop.ford_failure_rate(self.date)
+        # cost terms are both in number of days of remaining, so no need for yet another conversion factor
+        # cost is geometric sum because 0 is very bad and large values are good
+        expected_food_loss = self.current_stop.ford_expected_food_loss(self.date)
+        parameters = {'lost food': expected_food_loss}
+        cost = 1.0/float(self.remaining_food(action='ford', parameters)) + 1.0/float(self.remaining_health(action='ford', parameters))
+        return a*benefit - b*cost
+
+
+    def remaining_food(self, action, parameters):
+        # the estiamted amount of food remaining in terms of days remaining after the given action is carried out
         if action == 'travel':
             total_need = sum([member['needs']['food'] for member in self.members if member['condition']['health'] > 0])
-            remaining_food = self.inventory['food'] - days * total_need
+            remaining_food = self.inventory['food'] - parameters['days'] * total_need
+            remaining_days = remaining_food / float(total_need)
+        elif action == 'ford':
+            days = 1
+            total_need = sum([member['needs']['food'] for member in self.members if member['condition']['health'] > 0])
+            remaining_food = self.inventory['food'] - days * total_need - parameters.get('lost food', 0)
             remaining_days = remaining_food / float(total_need)
         else:
             raise ValueError('ERROR - action not implemented: ' + str(action))
@@ -130,7 +154,7 @@ class Party():
             self.data['members'][i]['condition']['afflictions']['hunger'] = severity
 
 
-    def remaining_health(self, action, days):
+    def remaining_health(self, action, parameters):
         member_health = []
         total_severity = []
 
@@ -140,9 +164,16 @@ class Party():
                 sev += severity
 
             total_severity.append(sev)
-            member_health.append(self.members[i]['condition']['health'] + sev)
 
-        remaining_days = [h/float(s) for h, s in zip(member_health, total_severity)]
+            if action == 'travel':
+                remaining_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
+            elif action == 'ford':
+                days = 1
+                remaining_health.append(self.members[i]['condition']['health'] + (days * sev))
+            else:
+                raise ValueError('ERROR - action not implemented: ' + str(action))
+            
+        remaining_days = [h/float(s) for h, s in zip(remainng_health, total_severity)]
 
         return max(min(remaining_days), 0.0)
 
