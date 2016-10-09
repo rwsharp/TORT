@@ -1,5 +1,6 @@
 from stop import Stop
 from util import *
+from numpy import power
 
 class River(Stop):
     '''
@@ -93,11 +94,31 @@ class River(Stop):
         # the river_state_initialization code.
         return (width, depth)
 
+
     def ford_failure_rate(self, date):
-        xxxxx
+        # automaticall fails if above 5 feet, otherwise linear interpolate down to zero
+        # every 100 feet of width increases failure rate by 10%
+        (width, depth) = self.river_state(date)
+        max_d = 5.0
+        min_d = 0.0
+        failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
         
-    def ford_expected_food_loss(self, date):
-        xxxxx
+        return failure_rate        
+        
+        
+    def ford_food_loss_fraction(self, date):
+        # automaticall fails if above 5 feet, otherwise linear interpolate down to 1 foot
+        # every 100 feet of width increases failure rate by 10%
+        (width, depth) = self.river_state(date)
+        max_d = 5.0
+        min_d = 1.0
+        if depth < 2.0:
+            lost_food_fraction = 0.0
+        else;
+            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+        
+        return lost_food_fraction      
+        
 
 
 

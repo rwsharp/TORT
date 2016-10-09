@@ -6,6 +6,10 @@ from camp import Camp
 from river import River
 from town import Town
 
+from numpy import ceil
+from numpy.random import uniform
+
+
 class Party():
     """
     Defines the trail and simulates a party travelling it.
@@ -54,11 +58,11 @@ class Party():
         """
 
         try:
-            strategies = {'greatest need', self.decide_greatest_need}
+            strategies = {'greatest need': self.decide_greatest_need}
         except KeyError:
             raise ValueError('ERROR - requested strategy is not implemented: ' + str(strategy))
 
-        return strategies[strategy]
+        return strategies[strategy]()
 
 
     def decide_greatest_need(self):
@@ -69,23 +73,26 @@ class Party():
         # continue actions: travel/ferry/ford/caulk
         # recover actions: rest/eat/drink/repair/trade/shop/hunt
 
-        max_utility = None
+        max_action, max_utility = None, None
         for action in available_actions:
             if action == 'travel':
                 utility = self.utility_travel()
             elif action == 'ford':
                 utility = self.utility_ford()
             else:
-                # we haven't implemented this yet, so it's really bad
+                # we haven't implemented this yet
                 utility = None
 
             if utility is not None:
                 if max_utility is None:
-                    max_utility = (action, utility)
+                    max_action, max_utility = action, utility
                 elif utility > max_utility[1]:
-                    max_utility = (action, utility)
+                    max_action, max_utility = action, utility
 
-        return max_utility[0]
+        if max_action is None:
+            raise ValueError('ERROR - No action has a defined utility, connot continue.')
+
+        return max_action
 
 
     def utility_travel(self):
@@ -99,7 +106,7 @@ class Party():
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
         parameters = {'days': 1}
-        cost = 1.0/float(self.remaining_food(action='travel', parameters=parameters)) + 1.0/float(self.remaining_health(action='travel', parameters))
+        cost = 1.0/float(self.remaining_food(action='travel', parameters=parameters)) + 1.0/float(self.remaining_health(action='travel', parameters=parameters))
         return a*benefit - b*cost
 
 
@@ -115,9 +122,9 @@ class Party():
         benefit = 1.0 * self.current_stop.ford_failure_rate(self.date)
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
-        expected_food_loss = self.current_stop.ford_expected_food_loss(self.date)
+        expected_food_loss = self.current_stop.ford_food_loss_fraction(self.date) * self.inventory['food']
         parameters = {'lost food': expected_food_loss}
-        cost = 1.0/float(self.remaining_food(action='ford', parameters)) + 1.0/float(self.remaining_health(action='ford', parameters))
+        cost = 1.0/float(self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
 
 
@@ -166,14 +173,14 @@ class Party():
             total_severity.append(sev)
 
             if action == 'travel':
-                remaining_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
+                member_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
             elif action == 'ford':
                 days = 1
-                remaining_health.append(self.members[i]['condition']['health'] + (days * sev))
+                member_health.append(self.members[i]['condition']['health'] + (days * sev))
             else:
                 raise ValueError('ERROR - action not implemented: ' + str(action))
             
-        remaining_days = [h/float(s) for h, s in zip(remainng_health, total_severity)]
+        remaining_days = [(100 if s == 0 else h/float(s)) for h, s in zip(member_health, total_severity)]
 
         return max(min(remaining_days), 0.0)
 
@@ -186,13 +193,15 @@ class Party():
                         print member['name'] + ' has died of ' + affliction
 
 
-    def update(self, party, action):
-        if action['type'] == 'travel':
-            self.travel(party, action['parameters'])
+    def update(self, action):
+        if action == 'travel':
+            self.travel()
+        elif action == 'ford':
+            self.ford()
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(action))
 
-        return party.state()
+        return self.state()
 
 
     def set_destination(self, mile_marker):
@@ -219,11 +228,11 @@ class Party():
 
         travel_speeds = self.current_stop.properties.get('travel speed modifier')
         if travel_speeds is not None:
-            terrain_modifier = travel_speeds[season(self.date)]
+            terrain_modifier = travel_speeds[date_to_season(self.date)]
         else:
             terrain_modifier = 1.0
 
-        return pace_modifier * terrain_modifier * min_speed
+        return int(ceil(pace_modifier * terrain_modifier * min_speed))
 
 
     def arrived(self):
@@ -241,41 +250,71 @@ class Party():
             self.condition = 'on the trail'
 
 
-    def travel(self, party, parameters):
+    def travel(self):
         """
-        Simulate one day's travel along the trail. Update's the condition of the party.
-
-        Parameters
-        ----------
-        party: the party traveling the trail
+        Simulate one day's travel along the trail. Update the condition of the party.
 
         Returns
         -------
         """
 
-        season = self.get_season()
-        section = self.get_terrain(party.current_stop.mile_marker)
-        miles_per_day = party.get_min_speed() * section['travel speed modifier'][season]
+        miles_per_day = self.party_speed()
 
-        stop = None
+        # simulate each mile of travel until we either hit a major stop or encounter a calamity
+        for i in range(miles_per_day):
+            mile_marker = self.current_stop.mile_marker
+            self.current_stop = self.trail.path[mile_marker + 1]           
+            
+            if isinstance(self.current_stop, (River, Town)):
+                # arrived at next major stop
+                print 'Arrived at ' + self.current_stop['name']
+                if isinstance(self.current_stop, River):
+                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_status(self.date))
+                self.last_major_stop = self.current_stop
+                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
+                break
+            
+            # todo: decide if a calamity is encountered and the consquences
 
-        if party.current_stop.mile_marker + miles_per_day >= party.next_major_stop.mile_marker:
-            # arrived at next major stop
-            print 'Arrived at ' + party.next_major_stop['name']
-            party.current_stop.mile_marker = party.next_major_stop.mile_marker
-            party.last_major_stop = party.next_major_stop
-            party.next_major_stop = self.next_major_stop(party.current_stop.mile_marker)
+        self.feed()
+        self.update_health()
+        self.date += timedelta(days=1)
 
-            stop = party.last_major_stop
+        return
 
-        else:
-            party.current_stop.mile_marker += miles_per_day
 
-            stop = Camp(party.current_stop.mile_marker).stop
+    def ford(self):
+        """
+        Simulate fording a river. It takes one day. Update the condition of the party.
 
-        party.current_stop = stop
-        party.feed()
-        party.update_health()
+        Returns
+        -------
+        """
+
+        # fording can fail in which case the party does not advance and loses 1 day of food
+        # fording can cause food to get wet and be considered lost, but the party does advance
+        # fording can succeed, in which case advacne one mile and take 1 day
+
+        # decide if fording will succeed or fail
+        ford_failure = True if uniform() < self.current_stop.ford_failure_rate(self.date) else False
+        # decide how much food is lost by fording
+        lost_food = self.inventory['food'] * (1.0 if uniform() < self.current_stop.ford_food_loss_fraction(self.date) else 0.0)
+
+        # made it across, so advance the party        
+        if not ford_failure:            
+            mile_marker = self.current_stop.mile_marker
+            self.current_stop = self.trail.path[mile_marker + 1]           
+            
+            if isinstance(self.current_stop, (River, Town)):
+                # arrived at next major stop
+                print 'Arrived at ' + self.current_stop['name']
+                self.last_major_stop = self.current_stop
+                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
+            
+
+        self.inventory['food'] = max(self.inventory['food'] - lost_food, 0.0)
+        self.feed()
+        self.update_health()
         self.date += timedelta(days=1)
 
         return
