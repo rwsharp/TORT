@@ -99,14 +99,14 @@ class Party():
         # conversion factors
         # the benefit of travelling 15 miles in a day is equal to the cost of having 3 days left of both food and health
         a = 1.0/15.0
-        b = 3.0/2.0
+        b = 3.1/2.0
 
         # nominal distance traveled in one day
         benefit = self.party_speed()
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
         parameters = {'days': 1}
-        cost = 1.0/float(self.remaining_food(action='travel', parameters=parameters)) + 1.0/float(self.remaining_health(action='travel', parameters=parameters))
+        cost = 1.0/float(0.1 + self.remaining_food(action='travel', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='travel', parameters=parameters))
         return a*benefit - b*cost
 
 
@@ -114,7 +114,7 @@ class Party():
         # conversion factors
         # the benefit of crossing the river in a day is equal to the cost of having 3 days left of both food and health
         a = 1.0
-        b = 3.0/2.0
+        b = 3.1/2.0
 
         # fording a river runs the risk of a) failure - being forced to go back or b) loss of provisions
 
@@ -124,7 +124,7 @@ class Party():
         # cost is geometric sum because 0 is very bad and large values are good
         expected_food_loss = self.current_stop.ford_food_loss_fraction(self.date) * self.inventory['food']
         parameters = {'lost food': expected_food_loss}
-        cost = 1.0/float(self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(self.remaining_health(action='ford', parameters=parameters))
+        cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
 
 
@@ -146,19 +146,20 @@ class Party():
 
 
     def feed(self):
-        for i, member in enumerate(self.data['members']):
-            ration = min(member['needs']['food'], self.data['inventory']['food'])
-            self.data['inventory']['food'] -= ration
-
-            if 0 < ration < member['needs']['food']:
-                severity = -5
-            elif ration == 0:
-                severity = -10
-            else:
-                severity = 0
-
-            self.data['members'][i]['condition'].setdefault('afflictions', dict())
-            self.data['members'][i]['condition']['afflictions']['hunger'] = severity
+        for i, member in enumerate(self.members):
+            if member['condition']['health'] > 0:
+                ration = min(member['needs']['food'], self.inventory['food'])
+                self.inventory['food'] -= ration
+    
+                if 0 < ration < member['needs']['food']:
+                    severity = -5
+                elif ration == 0:
+                    severity = -10
+                else:
+                    severity = 0
+    
+                self.members[i]['condition'].setdefault('afflictions', dict())
+                self.members[i]['condition']['afflictions']['hunger'] = severity
 
 
     def remaining_health(self, action, parameters):
@@ -166,19 +167,21 @@ class Party():
         total_severity = []
 
         for i, member in enumerate(self.members):
-            sev = 0
-            for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
-                sev += severity
-
-            total_severity.append(sev)
-
-            if action == 'travel':
-                member_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
-            elif action == 'ford':
-                days = 1
-                member_health.append(self.members[i]['condition']['health'] + (days * sev))
-            else:
-                raise ValueError('ERROR - action not implemented: ' + str(action))
+            # only count values for living members
+            if member['condition']['health'] > 0:
+                sev = 0
+                for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
+                    sev += severity
+    
+                total_severity.append(sev)
+    
+                if action == 'travel':
+                    member_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
+                elif action == 'ford':
+                    days = 1
+                    member_health.append(self.members[i]['condition']['health'] + (days * sev))
+                else:
+                    raise ValueError('ERROR - action not implemented: ' + str(action))
             
         remaining_days = [(100 if s == 0 else h/float(s)) for h, s in zip(member_health, total_severity)]
 
@@ -186,12 +189,16 @@ class Party():
 
 
     def update_health(self):
-            for i, member in enumerate(self.data['members']):
+        for i, member in enumerate(self.members):
+            if member['condition']['health'] > 0:
                 for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
-                    self.data['members'][i]['condition']['health'] += severity
-                    if self.data['members'][i]['condition']['health'] <= 0:
+                    self.members[i]['condition']['health'] += severity
+                    if self.members[i]['condition']['health'] <= 0:
                         print member['name'] + ' has died of ' + affliction
-
+                        # update needs
+                        for need in member['needs']:
+                            self.members[i]['needs'][need] = 0
+    
 
     def update(self, action):
         if action == 'travel':
@@ -201,7 +208,9 @@ class Party():
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(action))
 
-        return self.state()
+        self.update_condition()
+
+        return self.condition
 
 
     def set_destination(self, mile_marker):
@@ -267,9 +276,9 @@ class Party():
             
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
-                print 'Arrived at ' + self.current_stop['name']
+                print 'Arrived at ' + self.current_stop.name
                 if isinstance(self.current_stop, River):
-                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_status(self.date))
+                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(self.date))
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
                 break

@@ -24,15 +24,17 @@ def main():
             # make decisions
             action = party.decide(strategy)
             # update state based on action
+            print 'action: ' + str(action)
             party.update(action)
 
             if party.condition in ('arrived', 'dead'):
                 # update Powell metrics
                 continue_trail = False
 
-            print party.date, party.data['mile marker'], party.condition, party.number_alive()
-            print party.data['inventory']
-            #print party.data['members'][0]
+            print party.date, party.current_stop.mile_marker, party.current_stop.name 
+            print party.condition, party.number_alive()
+            print party.inventory
+            #print party.members[0]
             print
 
     # present Powell metrics

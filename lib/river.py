@@ -38,6 +38,7 @@ class River(Stop):
             print 'WARNING - River stop allows "travel" action: ' + str(self)
 
         self.properties.update(properties)
+        self.history = None
 
 
     def initialize_river_state(self, year):
@@ -75,9 +76,13 @@ class River(Stop):
 
 
     def river_state(self, date):
+        if self.history is None:
+            self.initialize_river_state(date.year)
+            
+ 
         last_stage_date = None
         last_stage = None
-        for stage_date, stage in self.history:
+        for stage_date, stage in self.history.iteritems():
             if last_stage_date is not None:
                 if last_stage_date <= date <= stage_date:
                     # linear interpolation of conditions
@@ -114,7 +119,7 @@ class River(Stop):
         min_d = 1.0
         if depth < 2.0:
             lost_food_fraction = 0.0
-        else;
+        else:
             lost_food_fraction = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
         
         return lost_food_fraction      
