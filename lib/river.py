@@ -106,7 +106,10 @@ class River(Stop):
         (width, depth) = self.river_state(date)
         max_d = 5.0
         min_d = 0.0
-        failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+        if min_d <= depth <= max_d:
+            failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+        else:
+            failure_rate = 1.0
         
         return failure_rate        
         
@@ -124,6 +127,40 @@ class River(Stop):
         
         return lost_food_fraction      
         
+
+    def caulk_failure_rate(self, date):
+        # automatically fails if above 8 feet, otherwise linear interpolate down to two feet
+        # automatically fails if below two feet (too shallow)
+        # every 100 feet of width increases failure rate by 10%
+        (width, depth) = self.river_state(date)
+        max_d = 8.0
+        min_d = 2.0
+
+        if min_d <= depth <= max_d:
+            failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+        else:
+            failure_rate = 1.0
+            
+        return failure_rate        
+        
+        
+    def caulk_food_loss_fraction(self, date):
+        # automaticall fails if above 8 feet, otherwise linear interpolate down to 2 foot
+        # every 100 feet of width increases failure rate by 10%
+        (width, depth) = self.river_state(date)
+        max_d = 8.0
+        min_d = 2.0
+
+        if min_d <= depth <= max_d:
+            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+        elif depth < min_d:
+            lost_food_fraction = 0.0
+        elif max_d < depth:
+            lost_food_fraction = 1.0
+        else:
+            raise ValueError('ERROR - this clause cannot be reached.')
+        
+        return lost_food_fraction      
 
 
 

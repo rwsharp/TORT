@@ -79,6 +79,8 @@ class Party():
                 utility = self.utility_travel()
             elif action == 'ford':
                 utility = self.utility_ford()
+            elif action == 'caulk':
+                utility = self.utility_caulk()
             else:
                 # we haven't implemented this yet
                 utility = None
@@ -86,7 +88,7 @@ class Party():
             if utility is not None:
                 if max_utility is None:
                     max_action, max_utility = action, utility
-                elif utility > max_utility[1]:
+                elif utility > max_utility:
                     max_action, max_utility = action, utility
 
         if max_action is None:
@@ -126,6 +128,25 @@ class Party():
         parameters = {'lost food': expected_food_loss}
         cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
+
+
+    def utility_caulk(self):
+        # conversion factors
+        # the benefit of crossing the river in a day is equal to the cost of having 3 days left of both food and health
+        a = 1.0
+        b = 3.1/2.0
+
+        # caulking and floating across a river runs the risk of a) failure - being forced to go back or b) loss of provisions
+
+        # expected distance traveled in one day
+        benefit = 1.0 * self.current_stop.caulk_failure_rate(self.date)
+        # cost terms are both in number of days of remaining, so no need for yet another conversion factor
+        # cost is geometric sum because 0 is very bad and large values are good
+        expected_food_loss = self.current_stop.caulk_food_loss_fraction(self.date) * self.inventory['food']
+        parameters = {'lost food': expected_food_loss}
+        cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
+        return a*benefit - b*cost
+
 
 
     def remaining_food(self, action, parameters):
@@ -205,6 +226,8 @@ class Party():
             self.travel()
         elif action == 'ford':
             self.ford()
+        elif action == 'caulk':
+            self.caulk()
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(action))
 
@@ -301,7 +324,7 @@ class Party():
         """
 
         # fording can fail in which case the party does not advance and loses 1 day of food
-        # fording can cause food to get wet and be considered lost, but the party does advance
+        # fording can cause food to get wet and be considered lost
         # fording can succeed, in which case advacne one mile and take 1 day
 
         # decide if fording will succeed or fail
@@ -318,8 +341,53 @@ class Party():
                 # arrived at next major stop
                 print 'Arrived at ' + self.current_stop['name']
                 self.last_major_stop = self.current_stop
-                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
+                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)
+        else:
+            print 'You failed to ford the river!'
             
+        if lost_food > 0:
+            print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
+
+        self.inventory['food'] = max(self.inventory['food'] - lost_food, 0.0)
+        self.feed()
+        self.update_health()
+        self.date += timedelta(days=1)
+
+        return
+
+
+    def caulk(self):
+        """
+        Simulate caulking to cross a river. It takes one day. Update the condition of the party.
+
+        Returns
+        -------
+        """
+
+        # caulking can fail in which case the party does not advance and loses 1 day of food
+        # caulking can cause food to get wet and be considered lost
+        # caulking can succeed, in which case advacne one mile and take 1 day
+
+        # decide if caulking will succeed or fail
+        caulk_failure = True if uniform() < self.current_stop.caulk_failure_rate(self.date) else False
+        # decide how much food is lost by fording
+        lost_food = self.inventory['food'] * (1.0 if uniform() < self.current_stop.caulk_food_loss_fraction(self.date) else 0.0)
+
+        # made it across, so advance the party        
+        if not caulk_failure:            
+            mile_marker = self.current_stop.mile_marker
+            self.current_stop = self.trail.path[mile_marker + 1]           
+            
+            if isinstance(self.current_stop, (River, Town)):
+                # arrived at next major stop
+                print 'Arrived at ' + self.current_stop['name']
+                self.last_major_stop = self.current_stop
+                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)
+        else:
+            print 'You failed to cross the river by caulking!'
+            
+        if lost_food > 0:
+            print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
 
         self.inventory['food'] = max(self.inventory['food'] - lost_food, 0.0)
         self.feed()
