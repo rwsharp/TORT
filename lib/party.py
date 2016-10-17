@@ -7,7 +7,7 @@ from river import River
 from town import Town
 
 from numpy import ceil
-from numpy.random import uniform
+from numpy.random import uniform, normal
 
 
 class Party():
@@ -296,7 +296,20 @@ class Party():
         for i in range(miles_per_day):
             mile_marker = self.current_stop.mile_marker
             self.current_stop = self.trail.path[mile_marker + 1]           
-            
+
+            # todo: decide if a calamity is encountered and the consquences
+            for danger in self.current_stop.properties['dangers']:
+                if uniform() < danger['probability']:
+                    # mon dieu! Disaster strikes!
+                    print 'Gadzooks, disaster has struck!'
+                    print 'Bad news, it\'s a ' + danger['name']
+                    # todo: pick a random victim
+                    mu, sig = danger['severity']
+                    severity = int(round(normal(mu, sig)))
+                    # todo: apply severity
+                    # todo: decide if this persists (affliction)
+                    # todo: delay the party
+
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
                 print 'Arrived at ' + self.current_stop.name
@@ -305,8 +318,7 @@ class Party():
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
                 break
-            
-            # todo: decide if a calamity is encountered and the consquences
+
 
         self.feed()
         self.update_health()

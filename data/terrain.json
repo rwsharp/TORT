@@ -13,6 +13,16 @@
             "rabbit": "high",
             "deer": "high",
             "buffalo": "low"
+        },
+        "dangers": [
+            {
+                "name": "bear attack",
+                "probability": 0.9944,
+                "severity": [-80, 10],
+                "travel delay": 1,
+                "ailment": false
+            }
+          ]
         }
     },
 
