@@ -7,7 +7,7 @@ from river import River
 from town import Town
 
 from numpy import ceil
-from numpy.random import uniform, normal
+from numpy.random import uniform, normal, randint
 
 
 class Party():
@@ -294,21 +294,37 @@ class Party():
 
         # simulate each mile of travel until we either hit a major stop or encounter a calamity
         for i in range(miles_per_day):
+            break_outer = False
             mile_marker = self.current_stop.mile_marker
-            self.current_stop = self.trail.path[mile_marker + 1]           
+            self.current_stop = self.trail.path[mile_marker + 1]
+            travel_time = 1
 
             # todo: decide if a calamity is encountered and the consquences
             for danger in self.current_stop.properties['dangers']:
                 if uniform() < danger['probability']:
                     # mon dieu! Disaster strikes!
-                    print 'Gadzooks, disaster has struck!'
-                    print 'Bad news, it\'s a ' + danger['name']
-                    # todo: pick a random victim
+                    break_outer = True                        
+                    print 'Sacre bleu, disaster has struck!'
+                    print 'Bad news, it\'s ' + danger['name']
+                    victim = randint(0, len(self.members))
+                    print 'Poor ' + self.members[victim]['name']
                     mu, sig = danger['severity']
                     severity = int(round(normal(mu, sig)))
-                    # todo: apply severity
-                    # todo: decide if this persists (affliction)
-                    # todo: delay the party
+                    if danger['affliction']:
+                        # it's an affliction - give it to the victim and continue
+                        if danger['affliction'] not in self.members[victim]['condition']['afflictions']:
+                            self.members[victim]['condition']['afflicitons'][danger['name']] = severity
+                        else:
+                            print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
+                    else:
+                        # it's a one-time event, let the victim have it and delay the party
+                        self.members[victim]['condition']['health'] += severity
+                        travel_time = danger.get('travel delay', 1)
+                        print 'Ouch!', self.members[victim]['condition']['health']
+                        break
+                
+            if break_outer:
+                break
 
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
@@ -322,7 +338,7 @@ class Party():
 
         self.feed()
         self.update_health()
-        self.date += timedelta(days=1)
+        self.date += timedelta(days=travel_time)
 
         return
 
