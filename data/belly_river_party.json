@@ -4,7 +4,7 @@
       "name": "Rich",
       "condition": {
         "health": 100,
-        "afflictions": {}
+        "afflictions": []
       },
       "needs": {
         "food": 3,
@@ -19,7 +19,7 @@
       "name": "Pat",
       "condition": {
         "health": 100,
-        "afflictions": {}
+        "afflictions": []
       },
       "needs": {
         "food": 3,
@@ -34,7 +34,7 @@
       "name": "Euge",
       "condition": {
         "health": 100,
-        "afflictions": {}
+        "afflictions": []
       },
       "needs": {
         "food": 3,
@@ -49,7 +49,7 @@
       "name": "Alex",
       "condition": {
         "health": 100,
-        "afflictions": {}
+        "afflictions": []
       },
       "needs": {
         "food": 3,
