@@ -1,0 +1,61 @@
+[
+  { "name": "Chief Mountain Trailhead",
+    "mile marker": 0,
+    "kind": "camp",
+    "add actions": ["rescue"],
+    "properties": {
+        "rescue": {
+            "ranger": ["spring", "summer", "fall"],
+            "resources": ["ambulence", "airlift", "phone call", "food", "shelter", "heat", "first aid"]            
+        }
+    }
+  },
+
+  { "name": "Belly River Ranger Station",
+    "mile marker": 4,
+    "kind": "ranger station",
+    "add actions": ["rescue"],
+    "properties": {
+        "rescue": {
+            "ranger": ["spring", "summer", "fall"],
+            "resources": ["airlift", "phone call", "food", "shelter", "heat", "first aid"]            
+        }
+    }
+  },
+
+  {"name": "Belly River Crossing",
+    "miles beyond last marker": 5,
+    "kind": "river",
+    "add actions": ["suspension bridge", "ford"],
+    "properties": {
+      "river": {
+        "flood stage": "spring",
+        "flood width": [300, 100],
+        "flood depth": [3, 1],
+        "low stage": "fall",
+        "low width": [200, 50],
+        "low depth": [1, 0.5],
+      }
+    }
+  },
+
+  { "name": "Cosely Lake",
+    "mile marker": 9,
+    "kind": "camp",
+    "add actions": [],
+    "properties": {}
+  },
+  { "name": "Glenn's Lake Foot",
+    "mile marker": 10,
+    "kind": "camp",
+    "add actions": [],
+    "properties": {}
+  },
+  { "name": "Glenn's Lake Head",
+    "mile marker": 13,
+    "kind": "camp",
+    "add actions": [],
+    "properties": {}
+  }
+
+]

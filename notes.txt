@@ -1,0 +1,20 @@
+for the backpacking branch, the big change will be to shift from day-by-day 
+travel to mile-by-mile travel. You're on foot, you have limited rations and
+gear. No oxen and carts. Health is more closely tied to energy. As you travel
+you do work (in the physics sense) and you must consume food and water and 
+rest from time to time to get it back. I think we should still stick to the 
+idea of a discrete trail (you travel 1 mile at a time), but let the idea of
+time become continuous (that mile will take you a more precise amount of
+time than a day). Time of day will come into it - you travel slowly after dark.
+Weather is a bigger threat than bears. So the threats are now: 
+exposure/weather, health/energy drain, falls, minor injuries that slow the 
+party, thirst (you need to find water or carry enough - so pack weight will
+come into it), more detailed terrain (especially grade).
+
+* more complex travel speed model (grade, time of day, weather condition 
+[sun, rain, thunder, hail, snow])
+
+* more complex health model (every mile draws down energy, must consume food,
+water, and rest to offset)
+
+* loop trails
