@@ -1,0 +1,72 @@
+{
+  "members": [
+    {
+      "name": "Rich",
+      "condition": {
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "speed": 4.0
+      }
+    },
+
+    {
+      "name": "Pat",
+      "condition": {
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "speed":4.0
+      }
+    },
+
+    {
+      "name": "Euge",
+      "condition": {
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "speed": 4.0
+      }
+    },
+
+    {
+      "name": "Alex",
+      "condition": {
+        "health": 100,
+        "afflictions": {}
+      },
+      "needs": {
+        "food": 3,
+        "water": 3
+      },
+      "abilities": {
+        "speed": 4.0
+      }
+    }
+  ],
+
+  "inventory": {
+    "food": 100,
+    "water": 100
+  },
+
+  "start time": "2016-09-17 10:00",
+
+  "mile marker": 0
+}

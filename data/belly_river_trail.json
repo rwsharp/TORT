@@ -24,7 +24,7 @@
   },
 
   {"name": "Belly River Crossing",
-    "miles beyond last marker": 5,
+    "mile marker": 5,
     "kind": "river",
     "add actions": ["suspension bridge", "ford"],
     "properties": {

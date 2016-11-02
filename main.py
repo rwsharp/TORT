@@ -8,9 +8,9 @@ def main():
     strategy = 'greatest need'
 
     data_path = os.path.abspath('data/')
-    trail_file_name = os.path.join(data_path, 'route.json')
-    terrain_file_name = os.path.join(data_path, 'terrain.json')
-    party_file_name = os.path.join(data_path, 'party.json')
+    trail_file_name = os.path.join(data_path, 'belly_river_route.json')
+    terrain_file_name = os.path.join(data_path, 'belly_river_terrain.json')
+    party_file_name = os.path.join(data_path, 'belly_river_party.json')
 
     for t in range(trials):
 

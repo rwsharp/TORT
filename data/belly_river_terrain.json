@@ -1,0 +1,47 @@
+[
+    {
+        "tpye": "grass",
+        "trail section": [0, 1],
+        "elevation gain per mile": -100,
+        "dangers": [
+            {
+                "name": "bear attack",
+                "probability": 0.9944,
+                "severity": [-80, 10],
+                "travel delay": 1,
+                "affliction": false
+            }
+          ]
+    },
+
+    {
+        "tpye": "rocks",
+        "trail section": [1, 2],
+        "elevation gain per mile": -100,
+        "dangers": [
+            {
+                "name": "bear attack",
+                "probability": 0.9944,
+                "severity": [-80, 10],
+                "travel delay": 1,
+                "affliction": false
+            }
+          ]
+    },
+
+    {
+      "tpye": "grass",
+      "trail section": [1, 20],
+      "elevation gain per mile": 400,
+      "dangers": [
+          {
+              "name": "bear attack",
+              "probability": 0.9944,
+              "severity": [-80, 10],
+              "travel delay": 1,
+              "affliction": false
+          }
+        ]
+  }
+
+]

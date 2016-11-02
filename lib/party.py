@@ -19,7 +19,7 @@ class Party():
             with open(party_file_name, 'r') as party_file:
                 self.party_data = json.load(party_file)
 
-            self.date = datetime.strptime(self.party_data['start date'], '%Y-%m-%d')
+            self.datetime = datetime.strptime(self.party_data['start time'], '%Y-%m-%d %H:%M')
 
         else:
             raise ValueError('ERROR - party config file required to initialize party.')
@@ -30,7 +30,7 @@ class Party():
             # initialize the rivers now that we have a date
             for stop in self.trail.path:
                 if isinstance(stop, River):
-                    stop.initialize_river_state(self.date.year)
+                    stop.initialize_river_state(self.datetime.year)
 
         else:
             raise ValueError('ERROR - trail object required to initialize party.')
@@ -121,10 +121,10 @@ class Party():
         # fording a river runs the risk of a) failure - being forced to go back or b) loss of provisions
 
         # expected distance traveled in one day
-        benefit = 1.0 * self.current_stop.ford_failure_rate(self.date)
+        benefit = 1.0 * self.current_stop.ford_failure_rate(self.datetime)
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
-        expected_food_loss = self.current_stop.ford_food_loss_fraction(self.date) * self.inventory['food']
+        expected_food_loss = self.current_stop.ford_food_loss_fraction(self.datetime) * self.inventory['food']
         parameters = {'lost food': expected_food_loss}
         cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
@@ -139,10 +139,10 @@ class Party():
         # caulking and floating across a river runs the risk of a) failure - being forced to go back or b) loss of provisions
 
         # expected distance traveled in one day
-        benefit = 1.0 * self.current_stop.caulk_failure_rate(self.date)
+        benefit = 1.0 * self.current_stop.caulk_failure_rate(self.datetime)
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
-        expected_food_loss = self.current_stop.caulk_food_loss_fraction(self.date) * self.inventory['food']
+        expected_food_loss = self.current_stop.caulk_food_loss_fraction(self.datetime) * self.inventory['food']
         parameters = {'lost food': expected_food_loss}
         cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
@@ -210,6 +210,7 @@ class Party():
 
 
     def update_health(self):
+        #todo: subtract energy needed to walk a mile
         for i, member in enumerate(self.members):
             if member['condition']['health'] > 0:
                 for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
@@ -260,11 +261,47 @@ class Party():
 
         travel_speeds = self.current_stop.properties.get('travel speed modifier')
         if travel_speeds is not None:
-            terrain_modifier = travel_speeds[date_to_season(self.date)]
+            terrain_modifier = travel_speeds[date_to_season(self.datetime)]
         else:
             terrain_modifier = 1.0
 
         return int(ceil(pace_modifier * terrain_modifier * min_speed))
+
+
+    def party_travel_time(self):
+        # travel_time is the time needed to cover the next mile of terrain
+        # the party can only travel as fast as its slowest member
+
+        min_speed = min([member['abilities']['speed'] for member in self.members if member['condition']['health'] > 0])
+
+        if self.pace == 'normal':
+            pace_modifier = 1.0
+        elif self.pace == 'easy':
+            pace_modifier = 0.75
+        elif self.pace == 'hard':
+            pace_modifier = 1.25
+        else:
+            raise ValueError('ERROR - Unknown pace: ' + str(self.pace))
+
+        # rule of thumb: add a mile for every 1000 feet elevation gain per mile
+        elevation_gain = self.current_stop.properties.get('elevation gain per mile')
+        added_distance = -0.2 if elevation_gain < -100 else (elevation_gain / 1000.0)
+
+        terrain = self.current_stop.properties.get('type')
+        if terrain == 'grass':
+            terrain_modifier = 1.0
+        elif terrain == 'rocks':
+            terrain_modifier = 0.75
+        elif terrain == 'sand':
+            terrain_modifier = 0.75
+        else:
+            raise ValueError('ERROR - terrain type not implemented')
+
+        speed = pace_modifier * terrain_modifier * min_speed
+        assert speed > 0, 'speed must be positive'
+        travel_time = (1.0 + added_distance)/speed
+
+        return travel_time
 
 
     def arrived(self):
@@ -284,47 +321,43 @@ class Party():
 
     def travel(self):
         """
-        Simulate one day's travel along the trail. Update the condition of the party.
+        Simulate one mile's travel along the trail. Update the condition of the party.
 
         Returns
         -------
         """
 
-        miles_per_day = self.party_speed()
-
         # simulate each mile of travel until we either hit a major stop or encounter a calamity
-        for i in range(miles_per_day):
-            break_outer = False
+        travel_time = self.party_travel_time()
+        self.datetime += timedelta(hours=travel_time)
+
+        progress = True
+
+        for danger in self.current_stop.properties['dangers']:
+            if uniform() < danger['probability']:
+                # mon dieu! Disaster strikes!
+                print 'Sacre bleu, disaster has struck!'
+                print 'Bad news, it\'s ' + danger['name']
+                victim = randint(0, len(self.members))
+                print 'Poor ' + self.members[victim]['name']
+                mu, sig = danger['severity']
+                severity = int(round(normal(mu, sig)))
+                if danger['affliction']:
+                    # it's an affliction - give it to the victim and continue travel
+                    if danger['affliction'] not in self.members[victim]['condition']['afflictions']:
+                        self.members[victim]['condition']['afflicitons'][danger['name']] = severity
+                    else:
+                        print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
+                else:
+                    # it's a one-time event, let the victim have it and delay the party
+                    self.members[victim]['condition']['health'] += severity
+                    progress = False
+                    print 'Ouch!', self.members[victim]['condition']['health']
+                    break
+
+        if progress:
             mile_marker = self.current_stop.mile_marker
             self.current_stop = self.trail.path[mile_marker + 1]
-            travel_time = 1
-
-            # todo: decide if a calamity is encountered and the consquences
-            for danger in self.current_stop.properties['dangers']:
-                if uniform() < danger['probability']:
-                    # mon dieu! Disaster strikes!
-                    break_outer = True                        
-                    print 'Sacre bleu, disaster has struck!'
-                    print 'Bad news, it\'s ' + danger['name']
-                    victim = randint(0, len(self.members))
-                    print 'Poor ' + self.members[victim]['name']
-                    mu, sig = danger['severity']
-                    severity = int(round(normal(mu, sig)))
-                    if danger['affliction']:
-                        # it's an affliction - give it to the victim and continue
-                        if danger['affliction'] not in self.members[victim]['condition']['afflictions']:
-                            self.members[victim]['condition']['afflicitons'][danger['name']] = severity
-                        else:
-                            print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
-                    else:
-                        # it's a one-time event, let the victim have it and delay the party
-                        self.members[victim]['condition']['health'] += severity
-                        travel_time = danger.get('travel delay', 1)
-                        print 'Ouch!', self.members[victim]['condition']['health']
-                        break
-                
-            if break_outer:
-                break
 
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
@@ -332,13 +365,9 @@ class Party():
                 if isinstance(self.current_stop, River):
                     print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(self.date))
                 self.last_major_stop = self.current_stop
-                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)    
-                break
+                self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)
 
-
-        self.feed()
         self.update_health()
-        self.date += timedelta(days=travel_time)
 
         return
 
