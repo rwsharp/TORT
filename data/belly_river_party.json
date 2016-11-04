@@ -28,6 +28,12 @@
       "abilities": {
         "speed":4.0
       }
+      "inventory": {
+        ----- pack inventory, in pounds
+        "food": 10,
+        "water": 10,
+        "gear": 10,
+      }
     },
 
     {

@@ -27,3 +27,7 @@ class Member():
         for affliction_def in member_def.get('afflictions', list()):
             a = Affliction(affliction_def)
             self.afflictions[a.name] = a
+
+    def update_health(self):
+
+
