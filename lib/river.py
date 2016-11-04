@@ -1,6 +1,7 @@
 from stop import Stop
 from util import *
-from numpy import power
+#from numpy import power
+from math import pow
 
 class River(Stop):
     '''
@@ -107,7 +108,7 @@ class River(Stop):
         max_d = 5.0
         min_d = 0.0
         if min_d <= depth <= max_d:
-            failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+            failure_rate = min((depth - min_d)/(max_d - min_d) * pow(1.1, width/100.0), 1.0)
         else:
             failure_rate = 1.0
         
@@ -123,7 +124,7 @@ class River(Stop):
         if depth < 2.0:
             lost_food_fraction = 0.0
         else:
-            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * pow(1.1, width/100.0), 1.0)
         
         return lost_food_fraction      
         
@@ -137,7 +138,7 @@ class River(Stop):
         min_d = 2.0
 
         if min_d <= depth <= max_d:
-            failure_rate = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+            failure_rate = min((depth - min_d)/(max_d - min_d) * pow(1.1, width/100.0), 1.0)
         else:
             failure_rate = 1.0
             
@@ -152,7 +153,7 @@ class River(Stop):
         min_d = 2.0
 
         if min_d <= depth <= max_d:
-            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * power(1.1, width/100.0), 1.0)
+            lost_food_fraction = min((depth - min_d)/(max_d - min_d) * pow(1.1, width/100.0), 1.0)
         elif depth < min_d:
             lost_food_fraction = 0.0
         elif max_d < depth:

@@ -6,9 +6,11 @@ from camp import Camp
 from river import River
 from town import Town
 
-from numpy import ceil
-from numpy.random import uniform, normal, randint
+#from numpy import ceil
+from math import ceil
 
+#from numpy.random import uniform, normal, randint
+from random import uniform, gauss, randint
 
 class Party():
     """
@@ -301,15 +303,16 @@ class Party():
 
             # todo: decide if a calamity is encountered and the consquences
             for danger in self.current_stop.properties['dangers']:
-                if uniform() < danger['probability']:
+                if uniform(0, 1) < danger['probability']:
                     # mon dieu! Disaster strikes!
                     break_outer = True                        
                     print 'Sacre bleu, disaster has struck!'
                     print 'Bad news, it\'s ' + danger['name']
-                    victim = randint(0, len(self.members))
+                    # todo: make sure to skip the victim and find another if a dead person is chosen
+                    victim = randint(0, len(self.members)-1)
                     print 'Poor ' + self.members[victim]['name']
                     mu, sig = danger['severity']
-                    severity = int(round(normal(mu, sig)))
+                    severity = int(round(gauss(mu, sig)))
                     if danger['affliction']:
                         # it's an affliction - give it to the victim and continue
                         if danger['affliction'] not in self.members[victim]['condition']['afflictions']:
@@ -356,9 +359,9 @@ class Party():
         # fording can succeed, in which case advacne one mile and take 1 day
 
         # decide if fording will succeed or fail
-        ford_failure = True if uniform() < self.current_stop.ford_failure_rate(self.date) else False
+        ford_failure = True if uniform(0, 1) < self.current_stop.ford_failure_rate(self.date) else False
         # decide how much food is lost by fording
-        lost_food = self.inventory['food'] * (1.0 if uniform() < self.current_stop.ford_food_loss_fraction(self.date) else 0.0)
+        lost_food = self.inventory['food'] * (1.0 if uniform(0, 1) < self.current_stop.ford_food_loss_fraction(self.date) else 0.0)
 
         # made it across, so advance the party        
         if not ford_failure:            
@@ -397,9 +400,9 @@ class Party():
         # caulking can succeed, in which case advacne one mile and take 1 day
 
         # decide if caulking will succeed or fail
-        caulk_failure = True if uniform() < self.current_stop.caulk_failure_rate(self.date) else False
+        caulk_failure = True if uniform(0, 1) < self.current_stop.caulk_failure_rate(self.date) else False
         # decide how much food is lost by fording
-        lost_food = self.inventory['food'] * (1.0 if uniform() < self.current_stop.caulk_food_loss_fraction(self.date) else 0.0)
+        lost_food = self.inventory['food'] * (1.0 if uniform(0, 1) < self.current_stop.caulk_food_loss_fraction(self.date) else 0.0)
 
         # made it across, so advance the party        
         if not caulk_failure:            

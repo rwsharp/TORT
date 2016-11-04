@@ -1,7 +1,9 @@
 from random import sample
 from datetime import datetime, timedelta
-from numpy import power
-from numpy.random import randint, gamma
+#from numpy import power
+from math import pow
+#from numpy.random import randint, gamma
+from random import randint, gammavariate
 
 def date_to_season(date):
     # Crude, but close enough
@@ -54,7 +56,7 @@ def random_date_in_season(year, season):
 
 def random_date(min_date, max_date):
     days_between = (max_date - min_date).days
-    offset = randint(0, days_between)
+    offset = randint(0, days_between-1)
     rd = min_date + timedelta(days=offset)
 
     return rd
@@ -62,9 +64,9 @@ def random_date(min_date, max_date):
 
 def sample_gamma(mean, std, size=None):
 
-    var = power(std, 2)
+    var = pow(std, 2)
 
-    k = power(mean, 2) / var
+    k = pow(mean, 2) / var
     theta = var / mean
 
-    return gamma(k, theta, size)
+    return [gammavariate(k, theta) for i in range(size)]
