@@ -2,6 +2,7 @@ import sys
 import os.path
 from lib.trail import Trail
 from lib.party import Party
+from lib.world import World
 
 def main():
     trials = 1
@@ -16,25 +17,21 @@ def main():
 
         trail = Trail(trail_file_name, terrain_file_name)
         party = Party(party_file_name, trail)
+        world = World(party = party, trail = trail, dt = party.start_datetime)
 
         # simulate until destination or death
         continue_trail = True
 
         while continue_trail:
-            # make decisions
-            action = party.decide(strategy)
-            # update state based on action
-            print 'action: ' + str(action)
-            party.update(action)
+            world.update(strategy)
 
-            if party.condition in ('arrived', 'dead'):
+            if world.party.condition in ('arrived', 'dead'):
                 # update Powell metrics
                 continue_trail = False
 
-            print party.date, party.current_stop.mile_marker, party.current_stop.name 
-            print party.condition, party.number_alive()
-            print party.inventory
-            #print party.members[0]
+            print world.party.date, world.party.current_stop.mile_marker, world.party.current_stop.name
+            print world.party.condition, world.party.number_alive()
+            print world.party.inventory
             print
 
     # present Powell metrics

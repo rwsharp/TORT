@@ -11,8 +11,14 @@ class World():
         self.trail = trail
         self.dt = dt
 
-    def update(self, party_action):
-        time_elapsed_in_hours = self.party.update(party_action, self.trail, self.dt)
+    def update(self, strategy):
+        # decide what action to take
+        self.party.action = self.party.decide(strategy)
+        print self.party.action
+
+        # update state based on action
+        time_elapsed_in_hours = self.party.update(self.trail, self.dt)
+
         minutes_elapsed, hours_elapsed = math.modf(time_elapsed_in_hours)
         hours_elapsed = int(hours_elapsed)
         minutes_elapsed = int(round(60 * minutes_elapsed))

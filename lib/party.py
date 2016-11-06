@@ -1,13 +1,15 @@
 import json
 from util import *
 from datetime import datetime, timedelta
+
+from member import Member
 from stop import Stop
 from camp import Camp
 from river import River
 from town import Town
 
 from numpy import ceil
-from numpy.random import uniform, normal, randint
+from numpy.random import uniform, normal, randint, choice
 
 
 class Party():
@@ -17,9 +19,9 @@ class Party():
     def __init__(self, party_file_name=None, trail=None):
         if party_file_name is not None:
             with open(party_file_name, 'r') as party_file:
-                self.party_data = json.load(party_file)
+                party_data = json.load(party_file)
 
-            self.datetime = datetime.strptime(self.party_data['start time'], '%Y-%m-%d %H:%M')
+            self.start_datetime = datetime.strptime(party_data['start time'], '%Y-%m-%d %H:%M')
 
         else:
             raise ValueError('ERROR - party config file required to initialize party.')
@@ -30,13 +32,14 @@ class Party():
             # initialize the rivers now that we have a date
             for stop in self.trail.path:
                 if isinstance(stop, River):
-                    stop.initialize_river_state(self.datetime.year)
+                    stop.initialize_river_state(self.start_datetime.year)
 
         else:
             raise ValueError('ERROR - trail object required to initialize party.')
 
-        self.members = self.party_data['members']
-        self.inventory = self.party_data['inventory']
+        self.members = dict()
+        for id, member_def in enumerate(party_data['members']):
+            self.members[id] = Member(member_def)
 
         self.current_stop = trail.start_of_trail()
         self.last_major_stop = self.current_stop
@@ -209,32 +212,19 @@ class Party():
         return max(min(remaining_days), 0.0)
 
 
-    def update_health(self):
-        #todo: subtract energy needed to walk a mile
-        for i, member in enumerate(self.members):
-            if member['condition']['health'] > 0:
-                for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
-                    self.members[i]['condition']['health'] += severity
-                    if self.members[i]['condition']['health'] <= 0:
-                        print member['name'] + ' has died of ' + affliction
-                        # update needs
-                        for need in member['needs']:
-                            self.members[i]['needs'][need] = 0
-    
-
     def update(self, action):
         if action == 'travel':
-            self.travel()
+            action_time = self.travel()
         elif action == 'ford':
-            self.ford()
+            action_time = self.ford()
         elif action == 'caulk':
-            self.caulk()
+            action_time = self.caulk()
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(action))
 
         self.update_condition()
 
-        return self.condition
+        return action_time
 
 
     def set_destination(self, mile_marker):
@@ -242,7 +232,7 @@ class Party():
 
 
     def number_alive(self):
-        return sum([1 if member['condition']['health'] > 0 else 0 for member in self.members])
+        return sum([1 if member.health > 0 else 0 for member in self.members.values()])
 
 
     def party_speed(self):
@@ -287,15 +277,7 @@ class Party():
         elevation_gain = self.current_stop.properties.get('elevation gain per mile')
         added_distance = -0.2 if elevation_gain < -100 else (elevation_gain / 1000.0)
 
-        terrain = self.current_stop.properties.get('type')
-        if terrain == 'grass':
-            terrain_modifier = 1.0
-        elif terrain == 'rocks':
-            terrain_modifier = 0.75
-        elif terrain == 'sand':
-            terrain_modifier = 0.75
-        else:
-            raise ValueError('ERROR - terrain type not implemented')
+        terrain_modifier = self.current_stop.properties.get('surface speed modifier', 1.0)
 
         speed = pace_modifier * terrain_modifier * min_speed
         assert speed > 0, 'speed must be positive'
@@ -329,30 +311,31 @@ class Party():
 
         # simulate each mile of travel until we either hit a major stop or encounter a calamity
         travel_time = self.party_travel_time()
-        self.datetime += timedelta(hours=travel_time)
 
         progress = True
+        travel_delay = 0
 
         for danger in self.current_stop.properties['dangers']:
             if uniform() < danger['probability']:
                 # mon dieu! Disaster strikes!
                 print 'Sacre bleu, disaster has struck!'
                 print 'Bad news, it\'s ' + danger['name']
-                victim = randint(0, len(self.members))
-                print 'Poor ' + self.members[victim]['name']
+                victim = choice(self.living_members())
+                print 'Poor ' + self.members[victim].name
                 mu, sig = danger['severity']
-                severity = int(round(normal(mu, sig)))
+                severity = int(round(sample_gamma(mu, sig)))
+                travel_delay = danger['travel delay']
                 if danger['affliction']:
                     # it's an affliction - give it to the victim and continue travel
                     if danger['affliction'] not in self.members[victim]['condition']['afflictions']:
-                        self.members[victim]['condition']['afflicitons'][danger['name']] = severity
+                        self.members[victim].afflicitons[danger['name']] = severity
                     else:
                         print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
                 else:
                     # it's a one-time event, let the victim have it and delay the party
-                    self.members[victim]['condition']['health'] += severity
+                    self.members[victim].health -= severity
                     progress = False
-                    print 'Ouch!', self.members[victim]['condition']['health']
+                    print 'Ouch!', self.members[victim].health
                     break
 
         if progress:
@@ -367,10 +350,28 @@ class Party():
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = self.trail.next_major_stop(self.current_stop.mile_marker)
 
-        self.update_health()
+        elapsed_time = travel_time + travel_delay
 
-        return
+        self.update_party(elapsed_time)
 
+        return elapsed_time
+
+
+    def update_party(self, elapsed_time):
+        for member in self.members.values():
+            member.update_health(elapsed_time)
+            member.update_weariness(elapsed_time)
+
+        self.update_condition()
+
+
+    def living_members(self):
+        return [id for member in self.members.iteritems() if member.health > 0]
+
+
+    def random_member(self, status='any'):
+
+        randint(0, len(self.members))
 
     def ford(self):
         """
@@ -409,6 +410,8 @@ class Party():
         self.feed()
         self.update_health()
         self.date += timedelta(days=1)
+
+        raise NotImplementedError('NEED TO RETURN ACTION TIME')
 
         return
 
@@ -450,5 +453,7 @@ class Party():
         self.feed()
         self.update_health()
         self.date += timedelta(days=1)
+
+        raise NotImplementedError('NEED TO RETURN ACTION TIME')
 
         return
