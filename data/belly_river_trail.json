@@ -13,7 +13,7 @@
 
   { "name": "Belly River Ranger Station",
     "mile marker": 4,
-    "kind": "ranger station",
+    "kind": "camp",
     "add actions": ["rescue"],
     "properties": {
         "rescue": {
@@ -34,7 +34,7 @@
         "flood depth": [3, 1],
         "low stage": "fall",
         "low width": [200, 50],
-        "low depth": [1, 0.5],
+        "low depth": [1, 0.5]
       }
     }
   },

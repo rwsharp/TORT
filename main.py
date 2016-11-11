@@ -9,7 +9,7 @@ def main():
     strategy = 'greatest need'
 
     data_path = os.path.abspath('data/')
-    trail_file_name = os.path.join(data_path, 'belly_river_route.json')
+    trail_file_name = os.path.join(data_path, 'belly_river_trail.json')
     terrain_file_name = os.path.join(data_path, 'belly_river_terrain.json')
     party_file_name = os.path.join(data_path, 'belly_river_party.json')
 

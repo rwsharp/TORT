@@ -8,7 +8,7 @@ from camp import Camp
 from river import River
 from town import Town
 
-from numpy import ceil
+from numpy import ceil, sign
 from numpy.random import uniform, normal, randint, choice
 
 
@@ -151,17 +151,25 @@ class Party():
         return a*benefit - b*cost
 
 
+    def inventory(self, item):
+        amount = 0
+        for member in self.members.values():
+            if member.health > 0:
+                amount += member.inventory.get(item, 0)
+
+        return amount
+
 
     def remaining_food(self, action, parameters):
         # the estiamted amount of food remaining in terms of days remaining after the given action is carried out
         if action == 'travel':
-            total_need = sum([member['needs']['food'] for member in self.members if member['condition']['health'] > 0])
-            remaining_food = self.inventory['food'] - parameters['days'] * total_need
+            total_need = sum([member.food_need for member in self.members.values() if member.health > 0])
+            remaining_food = self.inventory('food') - parameters['days'] * total_need
             remaining_days = remaining_food / float(total_need)
         elif action == 'ford':
             days = 1
-            total_need = sum([member['needs']['food'] for member in self.members if member['condition']['health'] > 0])
-            remaining_food = self.inventory['food'] - days * total_need - parameters.get('lost food', 0)
+            total_need = sum([member.food_need for member in self.members.values() if member.health > 0])
+            remaining_food = self.inventory('food') - days * total_need - parameters.get('lost food', 0)
             remaining_days = remaining_food / float(total_need)
         else:
             raise ValueError('ERROR - action not implemented: ' + str(action))
@@ -170,40 +178,39 @@ class Party():
 
 
     def feed(self):
-        for i, member in enumerate(self.members):
-            if member['condition']['health'] > 0:
-                ration = min(member['needs']['food'], self.inventory['food'])
-                self.inventory['food'] -= ration
-    
-                if 0 < ration < member['needs']['food']:
-                    severity = -5
-                elif ration == 0:
-                    severity = -10
-                else:
-                    severity = 0
-    
-                self.members[i]['condition'].setdefault('afflictions', dict())
-                self.members[i]['condition']['afflictions']['hunger'] = severity
+        for id in self.living_members():
+            ration = min(self.members[id].food_need, self.inventory('food'))
+            self.update_food(-ration)
+
+            if 0 < ration < self.members[id].food_need:
+                severity = -5
+            elif ration == 0:
+                severity = -10
+            else:
+                severity = 0
+
+            self.members[id].afflictions['hunger'].severity = severity
 
 
     def remaining_health(self, action, parameters):
+        # todo: update this to hourly form daily
         member_health = []
         total_severity = []
 
-        for i, member in enumerate(self.members):
+        for i, member in self.members.iteritems():
             # only count values for living members
-            if member['condition']['health'] > 0:
+            if member.health > 0:
                 sev = 0
-                for affliction, severity in member['condition'].get('afflictions', dict()).iteritems():
-                    sev += severity
+                for name, affliction in member.afflictions.iteritems():
+                    sev += affliction.severity
     
                 total_severity.append(sev)
     
                 if action == 'travel':
-                    member_health.append(self.members[i]['condition']['health'] + (parameters['days'] * sev))
+                    member_health.append(self.members[i].health + (parameters['days'] * sev))
                 elif action == 'ford':
                     days = 1
-                    member_health.append(self.members[i]['condition']['health'] + (days * sev))
+                    member_health.append(self.members[i].health + (days * sev))
                 else:
                     raise ValueError('ERROR - action not implemented: ' + str(action))
             
@@ -212,13 +219,13 @@ class Party():
         return max(min(remaining_days), 0.0)
 
 
-    def update(self, action):
+    def update(self, action, date_and_time):
         if action == 'travel':
-            action_time = self.travel()
+            action_time = self.travel(date_and_time)
         elif action == 'ford':
-            action_time = self.ford()
+            action_time = self.ford(date_and_time)
         elif action == 'caulk':
-            action_time = self.caulk()
+            action_time = self.caulk(date_and_time)
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(action))
 
@@ -238,7 +245,7 @@ class Party():
     def party_speed(self):
         # the party can only travel as fast as its slowest member
 
-        min_speed = min([member['abilities']['speed'] for member in self.members if member['condition']['health'] > 0])
+        min_speed = min([member.weighted_speed() for member in self.members.values() if member.health > 0])
 
         if self.pace == 'normal':
             pace_modifier = 1.0
@@ -301,7 +308,7 @@ class Party():
             self.condition = 'on the trail'
 
 
-    def travel(self):
+    def travel(self, date_and_time):
         """
         Simulate one mile's travel along the trail. Update the condition of the party.
 
@@ -373,7 +380,7 @@ class Party():
 
         randint(0, len(self.members))
 
-    def ford(self):
+    def ford(self, date_and_time):
         """
         Simulate fording a river. It takes one day. Update the condition of the party.
 
@@ -386,9 +393,9 @@ class Party():
         # fording can succeed, in which case advacne one mile and take 1 day
 
         # decide if fording will succeed or fail
-        ford_failure = True if uniform() < self.current_stop.ford_failure_rate(self.date) else False
+        ford_failure = True if uniform() < self.current_stop.ford_failure_rate(date_and_time) else False
         # decide how much food is lost by fording
-        lost_food = self.inventory['food'] * (1.0 if uniform() < self.current_stop.ford_food_loss_fraction(self.date) else 0.0)
+        lost_food = self.inventory('food') * (1.0 if uniform() < self.current_stop.ford_food_loss_fraction(date_and_time) else 0.0)
 
         # made it across, so advance the party        
         if not ford_failure:            
@@ -406,14 +413,36 @@ class Party():
         if lost_food > 0:
             print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
 
-        self.inventory['food'] = max(self.inventory['food'] - lost_food, 0.0)
+        self.update_food(-lost_food)
         self.feed()
         self.update_health()
-        self.date += timedelta(days=1)
 
         raise NotImplementedError('NEED TO RETURN ACTION TIME')
 
         return
+
+
+    def update_food(self, amount):
+        ids = self.living_members()
+        # take it out a pound at a time round-robin style (stop at zero)
+        delta = 0
+        continue_update = True
+        while continue_update:
+            for id in ids:
+                if sign(amount) > 0:
+                    self.members[id].inventory['food'] += 1
+                    delta += 1
+                elif sign(amount) < 0:
+                    if self.members[id].inventory['food'] > 0:
+                        self.members[id].inventory['food'] += -1
+                        delta += 1
+                else:
+                    # amount == 0
+                    continue_update = False
+
+                if delta == abs(amount):
+                    continue_update = False
+                    break
 
 
     def caulk(self):

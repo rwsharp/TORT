@@ -1,4 +1,5 @@
 from afflictions import Affliction
+from numpy import tanh
 
 class Member():
     """
@@ -12,7 +13,8 @@ class Member():
             self.health = member_def['condition']['health']
             self.food_need = member_def['needs']['food']
             self.water_need = member_def['needs']['water']
-            self.speed = member_def['abilities']['speed']
+            self.base_speed = member_def['abilities']['speed']
+            self.inventory = member_def['inventory']
         except:
             print 'There was an error reading the member definition dictionary:'
             print member_def
@@ -56,3 +58,21 @@ class Member():
         self.update_hunger(elapsed_time)
         self.update_thirst(elapsed_time)
         self.update_fatigue(elapsed_time)
+
+
+    def pack_weight(self):
+        pack_weight = 0
+        for item in ['food', 'water', 'gear']:
+            pack_weight += self.inventory.get(item)
+
+        return pack_weight
+
+
+    def weight_speed_modifier(self):
+        pw = self.pack_weight()
+        # 0 for empty pack, 1 for heavy pack - steep ramp from 0 to 1 at 50 pounds+
+        return (tanh(-0.5*(pw - 50)) + 1.0)*0.5
+
+
+    def weighted_speed(self):
+        return self.weight_speed_modifier() * self.base_speed

@@ -54,7 +54,9 @@ class Trail():
             rem_actions = trail_stop.get('remove actions')
             properties  = trail_stop.get('properties')
 
-            if trail_stop['kind'] == 'town':
+            if trail_stop['kind'] == 'camp':
+                self.path[next_mile_marker] = Camp(name=trail_stop.get('name', 'camp'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
+            elif trail_stop['kind'] == 'town':
                 self.path[next_mile_marker] = Town(name=trail_stop.get('name', 'town'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
             elif trail_stop['kind'] == 'river':
                 self.path[next_mile_marker] = River(name=trail_stop.get('name', 'river'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
