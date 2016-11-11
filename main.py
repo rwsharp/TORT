@@ -1,12 +1,15 @@
 import sys
 import os.path
+import argparse
+import datetime
 from lib.trail import Trail
 from lib.party import Party
 from lib.world import World
 
-def main():
+def main(args):
     trials = 1
     strategy = 'greatest need'
+    start_datetime = datetime.datetime.strptime(args.start_date_time, '%Y-%m-%d %H:%M')
 
     data_path = os.path.abspath('data/')
     trail_file_name = os.path.join(data_path, 'belly_river_trail.json')
@@ -15,9 +18,9 @@ def main():
 
     for t in range(trials):
 
-        trail = Trail(trail_file_name, terrain_file_name)
-        party = Party(party_file_name, trail)
-        world = World(party = party, trail = trail, dt = party.start_datetime)
+        trail = Trail(start_datetime, trail_file_name, terrain_file_name)
+        party = Party(start_datetime, party_file_name, trail)
+        world = World(start_datetime, party, trail)
 
         # simulate until destination or death
         continue_trail = True
@@ -29,12 +32,14 @@ def main():
                 # update Powell metrics
                 continue_trail = False
 
-            print world.party.date, world.party.current_stop.mile_marker, world.party.current_stop.name
+            print world.date_and_time, world.party.current_stop.mile_marker, world.party.current_stop.name
             print world.party.condition, world.party.number_alive()
-            print world.party.inventory
             print
 
     # present Powell metrics
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--start-date-time", help="party start date YYYY-MM-DD hh:mm")
+    args = parser.parse_args()
+    main(args)

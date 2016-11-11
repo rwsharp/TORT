@@ -43,15 +43,15 @@ class Member():
     # when you eat, drink, or rest you reduce these
 
     def update_hunger(self, elapsed_time):
-        self.afflictions['hunger']  += elapsed_time
+        self.afflictions['hunger'].severity += elapsed_time
 
 
     def update_thirst(self, elapsed_time):
-        self.afflictions['thirst']  += elapsed_time
+        self.afflictions['thirst'].severity += elapsed_time
 
 
     def update_fatigue(self, elapsed_time):
-        self.afflictions['fatigue'] += elapsed_time
+        self.afflictions['fatigue'].severity += elapsed_time
 
 
     def update_weariness(self, elapsed_time):

@@ -9,7 +9,7 @@ class Trail():
     """
     Defines the trail and simulates a party travelling it.
     """
-    def __init__(self, trail_file_name=None, terrain_file_name=None):
+    def __init__(self, date_and_time, trail_file_name=None, terrain_file_name=None):
         if trail_file_name is not None:
             with open(trail_file_name, 'r') as trail_file:
                 self.trail_data = json.load(trail_file)
@@ -24,12 +24,17 @@ class Trail():
 
         self.initialize_path()
 
+        for stop in self.path:
+            if isinstance(stop, River):
+                stop.initialize_river_state(date_and_time.year)
+
 
     def initialize_path(self):
         self.path = dict()
         mile_marker = 0
 
         for i, trail_stop in enumerate(self.trail_data):
+
             # find the next mile marker
             if trail_stop.get('mile marker') is None:
                 if trail_stop.get('miles beyond last marker') is None:
@@ -56,6 +61,7 @@ class Trail():
 
             if trail_stop['kind'] == 'camp':
                 self.path[next_mile_marker] = Camp(name=trail_stop.get('name', 'camp'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
+                self.path[next_mile_marker].set_terrain(self.get_terrain(mile_marker))
             elif trail_stop['kind'] == 'town':
                 self.path[next_mile_marker] = Town(name=trail_stop.get('name', 'town'), mile_marker=next_mile_marker, add_actions=add_actions, rem_actions=rem_actions, properties=properties)
             elif trail_stop['kind'] == 'river':

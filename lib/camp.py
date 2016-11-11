@@ -36,6 +36,10 @@ class Camp(Stop):
         self.properties.update(properties)
 
 
+    def set_terrain(self, terrain):
+        self.properties.update(terrain)
+
+
     """
     def hunt(self, shooter):
         # get game levels from self.trail.terrain
