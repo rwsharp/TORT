@@ -18,3 +18,38 @@ come into it), more detailed terrain (especially grade).
 water, and rest to offset)
 
 * loop trails
+
+
+hunger causes sev * t harm and it in increases at rate a*t, so how long have you got?
+
+
+dh(t) = a*dt
+h = a*t
+
+dharm = h(t) * dt = a*t*dt
+harm(t) = a*t^2/2
+
+100 = a * t^2/2
+200 = 1 * t^2
+pow(200, 1/2) = t
+14.14 = t
+
+100 = a * t^2/2
+sqrt(2*100/a) = lifetime
+
+200/(lifetime*24)^2 = a
+
+hunger = 7 days --> a = 0.007
+thirst = 3 days --> a = 0.039
+fatigue = 3 days --> a = 0.039
+
+
+
+http://www.backpacker.com/skills/beginner/packing-beginner/5-military-rucking-rules-every-backpacker-should-know/
+
+rule: 1% of body weight in a pack slows you down 6 seconds per mile
+
+(pw/bw*100*6) additional seconds per mile
+(3600/mph) base rate seconds per mile
+((3600/mph) + (pw/bw*100*6))/3600 adjusted hours per mile
+1.0 / (((3600/mph) + (pw/bw*100*6))/3600) adjusted miles per hour

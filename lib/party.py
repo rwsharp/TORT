@@ -135,7 +135,7 @@ class Party():
         return a*benefit - b*cost
 
 
-    def utility_ford(self):
+    def utility_ford(self, date_and_time):
         # conversion factors
         # the benefit of crossing the river in a day is equal to the cost of having 3 days left of both food and health
         a = 1.0
@@ -144,10 +144,10 @@ class Party():
         # fording a river runs the risk of a) failure - being forced to go back or b) loss of provisions
 
         # expected distance traveled in one day
-        benefit = 1.0 * self.current_stop.ford_failure_rate(self.datetime)
+        benefit = 1.0 * self.current_stop.ford_failure_rate(date_and_time)
         # cost terms are both in number of days of remaining, so no need for yet another conversion factor
         # cost is geometric sum because 0 is very bad and large values are good
-        expected_food_loss = self.current_stop.ford_food_loss_fraction(self.datetime) * self.total_inventory['food']
+        expected_food_loss = self.current_stop.ford_food_loss_fraction(date_and_time) * self.total_inventory('food')
         parameters = {'lost food': expected_food_loss}
         cost = 1.0/float(0.1 + self.remaining_food(action='ford', parameters=parameters)) + 1.0/float(0.1 + self.remaining_health(action='ford', parameters=parameters))
         return a*benefit - b*cost
@@ -309,6 +309,8 @@ class Party():
         assert speed > 0, 'speed must be positive'
         travel_time = (1.0 + added_distance)/speed
 
+        print 'Walking speed:', 1.0/travel_time
+
         return travel_time
 
 
@@ -350,9 +352,11 @@ class Party():
                         print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
                 else:
                     # it's a one-time event, let the victim have it and delay the party
-                    victim.health -= severity
+                    health_before = victim.health
+                    victim.update_health(0, danger['name'], severity)
+                    self.update_condition()
                     progress = False
-                    print 'Ouch!', victim.health
+                    print 'Ouch!', health_before, '-->', victim.health
                     break
 
         if progress:
@@ -363,7 +367,7 @@ class Party():
                 # arrived at next major stop
                 print 'Arrived at ' + self.current_stop.name
                 if isinstance(self.current_stop, River):
-                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(self.date))
+                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(date_and_time))
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = trail.next_major_stop(self.current_stop.mile_marker)
 
@@ -417,11 +421,9 @@ class Party():
 
         self.update_food(-lost_food)
         self.feed()
-        self.update_health()
+        self.update_condition()
 
-        raise NotImplementedError('NEED TO RETURN ACTION TIME')
-
-        return
+        return 1.0
 
 
     def update_food(self, amount):
@@ -486,3 +488,10 @@ class Party():
         raise NotImplementedError('NEED TO RETURN ACTION TIME')
 
         return timedelta(days=1)
+
+
+    def print_party_status(self):
+        for member in self.dead_members.values():
+            print 'Dead:', member.name
+        for member in self.living_members.values():
+            member.print_status()

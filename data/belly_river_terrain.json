@@ -1,29 +1,14 @@
 [
-  {
-    "tpye": "grass",
-    "trail section": [0, 1],
-    "surface speed modifier": 1.0,
-    "elevation gain per mile": -100,
-    "dangers": [
-      {
-        "name": "bear attack",
-        "probability": 0.9944,
-        "severity": [80, 10],
-        "travel delay": 2,
-        "affliction": false
-      }
-    ]
-  },
 
   {
-    "tpye": "rocks",
-    "trail section": [1, 2],
-    "surface speed modifier": 0.75,
-    "elevation gain per mile": -100,
+    "tpye": "grass",
+    "trail section": [0, 2],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 50,
     "dangers": [
       {
         "name": "bear attack",
-        "probability": 0.9944,
+        "probability": 0.10,
         "severity": [80, 10],
         "travel delay": 2,
         "affliction": false
@@ -33,13 +18,173 @@
 
   {
     "tpye": "grass",
-    "trail section": [1, 20],
+    "trail section": [2, 4],
     "surface speed modifier": 1.0,
-    "elevation gain per mile": 400,
+    "elevation gain per mile": 164,
     "dangers": [
       {
         "name": "bear attack",
-        "probability": 0.9944,
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [4, 6],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 140,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [6, 8],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 274,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [8, 10],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 164,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "mud",
+    "trail section": [10, 11],
+    "surface speed modifier": 0.9,
+    "elevation gain per mile": 132,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "mud",
+    "trail section": [11, 13],
+    "surface speed modifier": 0.9,
+    "elevation gain per mile": 254,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "mud",
+    "trail section": [13, 15],
+    "surface speed modifier": 0.9,
+    "elevation gain per mile": 153,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [15, 17],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 137,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [17, 19],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 107,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [19, 22],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 145,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
+        "severity": [80, 10],
+        "travel delay": 2,
+        "affliction": false
+      }
+    ]
+  },
+
+  {
+    "tpye": "grass",
+    "trail section": [22, 24],
+    "surface speed modifier": 1.0,
+    "elevation gain per mile": 372,
+    "dangers": [
+      {
+        "name": "bear attack",
+        "probability": 0.10,
         "severity": [80, 10],
         "travel delay": 2,
         "affliction": false
@@ -48,3 +193,7 @@
   }
 
 ]
+
+
+
+

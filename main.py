@@ -34,7 +34,10 @@ def main(args):
 
             print world.date_and_time, world.party.current_stop.mile_marker, world.party.current_stop.name
             print world.party.condition, world.party.number_alive()
+            world.party.print_party_status()
             print
+
+    print 'Total trail time:', world.date_and_time - start_datetime
 
     # present Powell metrics
 

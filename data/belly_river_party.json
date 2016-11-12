@@ -4,6 +4,7 @@
       "name": "Rich",
       "condition": {
         "health": 100,
+        "weight": 190,
         "afflictions": []
       },
       "needs": {
@@ -25,6 +26,7 @@
       "name": "Pat",
       "condition": {
         "health": 100,
+        "weight": 190,
         "afflictions": []
       },
       "needs": {
@@ -46,6 +48,7 @@
       "name": "Euge",
       "condition": {
         "health": 100,
+        "weight": 190,
         "afflictions": []
       },
       "needs": {
@@ -67,6 +70,7 @@
       "name": "Alex",
       "condition": {
         "health": 100,
+        "weight": 190,
         "afflictions": []
       },
       "needs": {
