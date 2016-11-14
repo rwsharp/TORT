@@ -239,18 +239,20 @@ class Party():
 
 
     def update(self, trail, date_and_time):
+        events = dict()
+
         if self.action == 'travel':
-            action_time = self.travel(trail, date_and_time)
+            action_time, events = self.travel(trail, date_and_time)
         elif self.action == 'ford':
-            action_time = self.ford(trail, date_and_time)
+            action_time, events = self.ford(trail, date_and_time)
         elif self.action == 'caulk':
-            action_time = self.caulk(trail, date_and_time)
+            action_time, events = self.caulk(trail, date_and_time)
         else:
             raise ValueError('ERROR - Action not recognized: ' + str(self.action))
 
         self.update_condition()
 
-        return action_time
+        return action_time, events
 
 
     def set_destination(self, mile_marker):
@@ -309,7 +311,7 @@ class Party():
         assert speed > 0, 'speed must be positive'
         travel_time = (1.0 + added_distance)/speed
 
-        print 'Walking speed:', 1.0/travel_time
+        # print 'Walking speed:', 1.0/travel_time
 
         return travel_time
 
@@ -328,6 +330,8 @@ class Party():
         -------
         """
 
+        events = {'bear attack': False}
+
         # simulate each mile of travel until we either hit a major stop or encounter a calamity
         travel_time = self.party_travel_time()
 
@@ -337,10 +341,10 @@ class Party():
         for danger in self.current_stop.properties.get('dangers', list()):
             if uniform() < danger['probability']:
                 # mon dieu! Disaster strikes!
-                print 'Sacre bleu, disaster has struck!'
-                print 'Bad news, it\'s ' + danger['name']
+                # print 'Sacre bleu, disaster has struck!'
+                # print 'Bad news, it\'s ' + danger['name']
                 victim = choice(self.living_members.values())
-                print 'Poor ' + victim.name
+                # print 'Poor ' + victim.name
                 mu, sig = danger['severity']
                 severity = int(round(sample_gamma(mu, sig)))
                 travel_delay = danger['travel delay']
@@ -349,14 +353,18 @@ class Party():
                     if danger['affliction'] not in victim.afflictions:
                         victim.afflicitons[danger['name']] = Affliction({'name': danger['name'], 'severity': severity})
                     else:
-                        print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
+                        1
+                        # print 'Lucky you, you can\'t get ' + danger['name'] + ' twice.'
                 else:
                     # it's a one-time event, let the victim have it and delay the party
                     health_before = victim.health
                     victim.update_health(0, danger['name'], severity)
                     self.update_condition()
                     progress = False
-                    print 'Ouch!', health_before, '-->', victim.health
+
+                    if danger['name'] == 'bear attack':
+                        events['bear attack'] = True
+                    # print 'Ouch!', health_before, '-->', victim.health
                     break
 
         if progress:
@@ -365,9 +373,11 @@ class Party():
 
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
-                print 'Arrived at ' + self.current_stop.name
+                # print 'Arrived at ' + self.current_stop.name
+                1
                 if isinstance(self.current_stop, River):
-                    print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(date_and_time))
+                    # print 'River conditions (width, depth) = ' + str(self.current_stop.river_state(date_and_time))
+                    1
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = trail.next_major_stop(self.current_stop.mile_marker)
 
@@ -375,7 +385,7 @@ class Party():
 
         self.update_party(elapsed_time)
 
-        return elapsed_time
+        return elapsed_time, events
 
 
     def update_party(self, elapsed_time):
@@ -394,6 +404,8 @@ class Party():
         -------
         """
 
+        events = {'failed to ford': False}
+
         # fording can fail in which case the party does not advance and loses 1 day of food
         # fording can cause food to get wet and be considered lost
         # fording can succeed, in which case advacne one mile and take 1 day
@@ -410,20 +422,22 @@ class Party():
             
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
-                print 'Arrived at ' + self.current_stop['name']
+                # print 'Arrived at ' + self.current_stop['name']
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = trail.next_major_stop(self.current_stop.mile_marker)
         else:
-            print 'You failed to ford the river!'
+            # print 'You failed to ford the river!'
+            events['failed to ford'] = True
             
         if lost_food > 0:
-            print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
+            # print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
+            1
 
         self.update_food(-lost_food)
         self.feed()
         self.update_condition()
 
-        return 1.0
+        return 1.0, events
 
 
     def update_food(self, amount):
@@ -456,6 +470,8 @@ class Party():
         -------
         """
 
+        events = {'failed to caulk': False}
+
         # caulking can fail in which case the party does not advance and loses 1 day of food
         # caulking can cause food to get wet and be considered lost
         # caulking can succeed, in which case advacne one mile and take 1 day
@@ -472,26 +488,27 @@ class Party():
             
             if isinstance(self.current_stop, (River, Town)):
                 # arrived at next major stop
-                print 'Arrived at ' + self.current_stop['name']
+                # print 'Arrived at ' + self.current_stop['name']
                 self.last_major_stop = self.current_stop
                 self.next_major_stop = trail.next_major_stop(self.current_stop.mile_marker)
         else:
-            print 'You failed to cross the river by caulking!'
+            # print 'You failed to cross the river by caulking!'
+            events['failed to caulk'] = True
             
         if lost_food > 0:
-            print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
+            1
+            # print 'Your provisions got wet and you lost '  + str(lost_food) + ' food!'
 
         self.total_inventory['food'] = max(self.total_inventory['food'] - lost_food, 0.0)
         self.feed()
         self.update_condition()
 
-        raise NotImplementedError('NEED TO RETURN ACTION TIME')
-
-        return timedelta(days=1)
+        return timedelta(days=1), events
 
 
     def print_party_status(self):
         for member in self.dead_members.values():
-            print 'Dead:', member.name
+            # print 'Dead:', member.name
+            1
         for member in self.living_members.values():
             member.print_status()

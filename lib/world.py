@@ -10,14 +10,20 @@ class World():
         self.party = party
         self.trail = trail
         self.date_and_time = date_and_time
+        self.event_counter = dict()
 
     def update(self, strategy):
         # decide what action to take
         self.party.action = self.party.decide(strategy, self.date_and_time)
-        print self.party.action
+        # print self.party.action
 
         # update state based on action
-        time_elapsed_in_hours = self.party.update(self.trail, self.date_and_time)
+        time_elapsed_in_hours, events = self.party.update(self.trail, self.date_and_time)
+
+        for event, value in events.iteritems():
+            self.event_counter.setdefault(event, dict())
+            self.event_counter[event].setdefault(value, 0)
+            self.event_counter[event][value] += 1
 
         minutes_elapsed, hours_elapsed = math.modf(time_elapsed_in_hours)
         hours_elapsed = int(hours_elapsed)

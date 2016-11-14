@@ -42,7 +42,7 @@ class Member():
         if danger is not None and self.health > 0:
             self.health -= danger_severity
             if self.health <= 0:
-                print self.name + ' has died of ' + danger
+                #print self.name + ' has died of ' + danger
                 self.food_need = None
                 self.water_need = None
 
@@ -51,7 +51,7 @@ class Member():
             if self.health > 0:
                 self.health -= affliction.severity * elapsed_time
                 if self.health <= 0:
-                    print self.name + ' has died of ' + affliction.name
+                    #print self.name + ' has died of ' + affliction.name
                     self.food_need = None
                     self.water_need = None
 
